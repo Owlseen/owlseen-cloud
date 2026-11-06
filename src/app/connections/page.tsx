@@ -1,0 +1,48 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { Suspense } from "react";
+import { connectionsOf, connectorsOffered } from "@/application/connections";
+import { Loading, PageHeading, Shell } from "@/components/shell";
+import { SettingsNav } from "@/components/settings-nav";
+import { StatusDot } from "@/components/ui";
+import { currentSeat } from "@/infrastructure/auth/session";
+import { appServices } from "@/infrastructure/services";
+
+export const metadata: Metadata = { title: "Connections" };
+
+async function Catalogue() {
+  const seat = await currentSeat();
+  const connections = await connectionsOf(appServices(), seat.workspaceId);
+  return (
+    <ul className="grid max-w-3xl gap-3 sm:grid-cols-2">
+      {connectorsOffered().map((connector) => {
+        const mine = connections.filter((connection) => connection.kind === connector.kind);
+        return (
+          <li key={connector.kind}>
+            <Link href={`/connections/${connector.kind}`} className="flex h-full flex-col rounded-2xl border bg-card p-5 transition-colors hover:border-primary/50">
+              <span className="flex items-center gap-2 font-semibold tracking-[-0.015em]">
+                {mine.length > 0 && <StatusDot status={mine.some((connection) => connection.status === "failing") ? "failing" : "connected"} />}
+                {connector.name}
+              </span>
+              <span className="mt-2 flex-1 text-sm text-muted-foreground">{connector.summary}</span>
+              {mine.some((connection) => connection.lastError) && <span className="mt-3 text-xs text-alert">{mine.find((connection) => connection.lastError)?.lastError}</span>}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** The services a workspace can connect. */
+export default function ConnectionsPage() {
+  return (
+    <Shell section="settings">
+      <PageHeading title="Connections">Where this workspace’s figures come from. Keys are typed here, never in a conversation, and stay sealed.</PageHeading>
+      <SettingsNav current="/connections" />
+      <Suspense fallback={<Loading />}>
+        <Catalogue />
+      </Suspense>
+    </Shell>
+  );
+}
