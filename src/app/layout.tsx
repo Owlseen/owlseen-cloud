@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geologica, Spline_Sans_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { CloudAnalytics } from "@/components/cloud/cloud-analytics";
+import { isCloudService } from "@/components/cloud/cloud-service";
 import { BRAND } from "@/domain/brand";
 import "./globals.css";
 
@@ -28,6 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           {children}
         </ThemeProvider>
+        {isCloudService() && <CloudAnalytics />}
       </body>
     </html>
   );
